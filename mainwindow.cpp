@@ -36,17 +36,26 @@ void MainWindow::on_btnAdd_clicked() {
 
 // 3. 多线程统计逻辑 (THR 模块) [cite: 133]
 void MainWindow::updateStatistics() {
-    // 使用 QtConcurrent 在子线程执行计算，防止 UI 卡顿 [cite: 13, 133]
     QtConcurrent::run([this]() {
+        // 关键：在子线程中使用默认连接名（或者重新 open）
+        {
+            QSqlDatabase db = QSqlDatabase::database();
+            if (!db.isOpen()) db.open(); // 确保子线程内数据库是开启状态
+        }
+
         QMap<QString, double> statData;
         QSqlQuery query("SELECT category, SUM(amount) FROM finance GROUP BY category");
+
         while (query.next()) {
             statData.insert(query.value(0).toString(), query.value(1).toDouble());
         }
 
-        // 回到主线程更新 UI (通过 invokeMethod)
         QMetaObject::invokeMethod(this, [this, statData]() {
             refreshChart(statData);
+            // 更新总额显示
+            double total = 0;
+            for(double v : statData.values()) total += v;
+            ui->labelTotal->setText(QString("总额统计: %1").arg(total));
         });
     });
 }
