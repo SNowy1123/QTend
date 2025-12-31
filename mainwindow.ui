@@ -27,7 +27,7 @@
       <item>
        <widget class="QLineEdit" name="lineCategory">
         <property name="placeholderText">
-         <string>例如：餐饮、交通</string>
+         <string>例如：餐饮、交通、器材报销</string>
         </property>
        </widget>
       </item>
@@ -47,26 +47,25 @@
       </item>
       <item>
        <widget class="QPushButton" name="btnAdd">
-        <property name="text">
-         <string>添加账单</string>
-        </property>
         <property name="styleSheet">
          <string>background-color: #4CAF50; color: white; font-weight: bold;</string>
+        </property>
+        <property name="text">
+         <string>添加账单</string>
         </property>
        </widget>
       </item>
      </layout>
     </item>
-
     <item>
      <layout class="QHBoxLayout" name="horizontalLayout_2">
       <item>
        <widget class="QPushButton" name="btnFilter">
-        <property name="text">
-         <string>按分类筛选</string>
-        </property>
         <property name="toolTip">
          <string>在分类框输入文字后点击此按钮进行筛选，留空则显示全部</string>
+        </property>
+        <property name="text">
+         <string>按分类筛选</string>
         </property>
        </widget>
       </item>
@@ -80,7 +79,7 @@
       <item>
        <spacer name="horizontalSpacer">
         <property name="orientation">
-         <enum>Qt::Horizontal</enum>
+         <enum>Qt::Orientation::Horizontal</enum>
         </property>
         <property name="sizeHint" stdset="0">
          <size>
@@ -92,18 +91,16 @@
       </item>
      </layout>
     </item>
-
     <item>
      <widget class="QTableView" name="tableView">
       <property name="alternatingRowColors">
        <bool>true</bool>
       </property>
       <property name="selectionBehavior">
-       <enum>QAbstractItemView::SelectRows</enum>
+       <enum>QAbstractItemView::SelectionBehavior::SelectRows</enum>
       </property>
      </widget>
     </item>
-
     <item>
      <widget class="QChartView" name="chartView" native="true">
       <property name="minimumSize">
@@ -114,30 +111,36 @@
       </property>
      </widget>
     </item>
-
     <item>
      <widget class="QLabel" name="labelTotal">
+      <property name="font">
+       <font>
+        <pointsize>12</pointsize>
+        <bold>true</bold>
+       </font>
+      </property>
       <property name="text">
        <string>总额统计: 0.00 元</string>
       </property>
       <property name="alignment">
-       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-      </property>
-      <property name="font">
-       <font>
-        <pointSize>12</pointSize>
-        <weight>75</weight>
-        <bold>true</bold>
-       </font>
+       <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
       </property>
      </widget>
     </item>
    </layout>
   </widget>
-  <widget class="QMenuBar" name="menubar"/>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>900</width>
+     <height>17</height>
+    </rect>
+   </property>
+  </widget>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
- 
  <customwidgets>
   <customwidget>
    <class>QChartView</class>
