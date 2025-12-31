@@ -5,97 +5,128 @@
 #include <QSqlQuery>
 #include <QDate>
 #include <QtConcurrent>
-#include <QtCharts>
-#include <QDebug>
 
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow) {
     ui->setupUi(this);
-    // 1. 初始化数据库
+
     initDatabase();
-    // 2. 初始运行统计
     updateStatistics();
+
+    // 快捷键：回车添加
+    connect(ui->lineAmount, &QLineEdit::returnPressed, ui->btnAdd, &QPushButton::click);
 }
 
-// --- 核心模块：数据库初始化 ---
 void MainWindow::initDatabase() {
     QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
     db.setDatabaseName("finance.db");
 
     if (!db.open()) {
-        qDebug() << "错误：无法打开数据库 -" << db.lastError().text();
+        QMessageBox::critical(this, "错误", "数据库无法打开！");
         return;
     }
 
-    // 自动建表：确保表结构完全匹配代码
     QSqlQuery query;
-    // 使用 IF NOT EXISTS 防止重复创建
-    bool success = query.exec("CREATE TABLE IF NOT EXISTS finance ("
-                              "id INTEGER PRIMARY KEY AUTOINCREMENT, "
-                              "date TEXT, "
-                              "category TEXT, "
-                              "amount REAL)");
-    if (!success) {
-        qDebug() << "建表失败:" << query.lastError().text();
-    }
+    query.exec("CREATE TABLE IF NOT EXISTS finance ("
+               "id INTEGER PRIMARY KEY AUTOINCREMENT, "
+               "date TEXT, category TEXT, amount REAL)");
 
-    // Model/View 绑定
     model = new QSqlTableModel(this);
     model->setTable("finance");
     model->setEditStrategy(QSqlTableModel::OnManualSubmit);
-    model->select(); // 首次加载数据
+    model->select();
 
     ui->tableView->setModel(model);
     ui->tableView->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
-
-    qDebug() << "数据库初始化完毕，路径:" << QCoreApplication::applicationDirPath() + "/finance.db";
-    ui->statusbar->showMessage("数据库连接就绪", 3000);
+    ui->statusbar->showMessage("系统就绪", 3000);
 }
 
-// --- 核心模块：添加数据 (使用命名绑定修复参数错误) ---
+// 添加功能
 void MainWindow::on_btnAdd_clicked() {
-    QString category = ui->lineCategory->text();
-    QString amountStr = ui->lineAmount->text();
-    double amount = amountStr.toDouble();
-    QString date = QDate::currentDate().toString("yyyy-MM-dd");
+    QString cat = ui->lineCategory->text().trimmed();
+    double amt = ui->lineAmount->text().toDouble();
 
-    if (category.isEmpty() || amount <= 0) {
-        qDebug() << "输入无效：分类为空或金额为0";
+    if (cat.isEmpty() || amt <= 0) {
+        QMessageBox::warning(this, "提示", "分类不能为空且金额需大于0");
         return;
     }
 
     QSqlQuery query;
-    // 【关键修复】改用命名占位符 (:dt, :cat, :amt)
-    // 这种写法比 ? 更稳定，绝对不会出现 mismatch 错误
-    query.prepare("INSERT INTO finance (date, category, amount) VALUES (:dt, :cat, :amt)");
-
-    query.bindValue(":dt", date);
-    query.bindValue(":cat", category);
-    query.bindValue(":amt", amount);
+    query.prepare("INSERT INTO finance (date, category, amount) VALUES (:d, :c, :a)");
+    query.bindValue(":d", QDate::currentDate().toString("yyyy-MM-dd"));
+    query.bindValue(":c", cat);
+    query.bindValue(":a", amt);
 
     if (query.exec()) {
-        qDebug() << "数据插入成功！";
-        model->select();       // 刷新表格
-        updateStatistics();    // 刷新图表
-
-        // 清空输入框
+        model->select();
+        updateStatistics();
         ui->lineCategory->clear();
         ui->lineAmount->clear();
-    } else {
-        qDebug() << "插入失败详情:" << query.lastError().text();
+        ui->statusbar->showMessage("添加成功", 2000);
     }
-    ui->statusbar->showMessage("账单已成功录入系统", 2000);
 }
 
-// --- 核心模块：多线程统计 (修复跨线程报错) ---
-void MainWindow::updateStatistics() {
-    // 启动后台线程
-    QtConcurrent::run([this]() {
-        // 子线程必须使用独立的数据库连接名 "sub_conn"
-        QSqlDatabase subDb;
-        if (QSqlDatabase::contains("sub_conn")) {
-            subDb = QSqlDatabase::database("sub_conn");
+// 删除功能
+void MainWindow::on_btnDelete_clicked() {
+    int row = ui->tableView->currentIndex().row();
+    if (row < 0) {
+        QMessageBox::warning(this, "提示", "请先选中要删除的行");
+        return;
+    }
+
+    if (QMessageBox::question(this, "确认", "确定删除该记录？") == QMessageBox::Yes) {
+        model->removeRow(row);
+        if (model->submitAll()) {
+            updateStatistics();
+            ui->statusbar->showMessage("记录已删除", 2000);
         } else {
-            subDb = QSqlDatabase::addDatabase("QSQLITE", "sub_conn");
+            model->revertAll();
+        }
+    }
+}
+
+// 筛选功能
+void MainWindow::on_btnFilter_clicked() {
+    QString keyword = ui->lineCategory->text().trimmed();
+    if (keyword.isEmpty()) {
+        model->setFilter("");
+    } else {
+        model->setFilter(QString("category LIKE '%%1%'").arg(keyword));
+    }
+    model->select();
+}
+
+// 重置功能
+void MainWindow::on_btnReset_clicked() {
+    ui->lineCategory->clear();
+    model->setFilter("");
+    model->select();
+    ui->statusbar->showMessage("视图已重置", 2000);
+}
+
+// 报表功能
+void MainWindow::on_btnReport_clicked() {
+    QString month = QDate::currentDate().toString("yyyy-MM");
+    QSqlQuery q;
+    q.prepare("SELECT SUM(amount) FROM finance WHERE date LIKE :m");
+    q.bindValue(":m", month + "%");
+
+    if (q.exec() && q.next()) {
+        double total = q.value(0).toDouble();
+        QMessageBox::information(this, "月度报表",
+                                 QString("月份: %1\n总支出: %2 元").arg(month).arg(total));
+    }
+}
+
+// 多线程统计
+void MainWindow::updateStatistics() {
+    QtConcurrent::run([this]() {
+        QSqlDatabase subDb;
+        const QString connName = "sub_thread_conn";
+
+        if (QSqlDatabase::contains(connName)) {
+            subDb = QSqlDatabase::database(connName);
+        } else {
+            subDb = QSqlDatabase::addDatabase("QSQLITE", connName);
             subDb.setDatabaseName("finance.db");
         }
 
@@ -107,14 +138,10 @@ void MainWindow::updateStatistics() {
                 data.insert(q.value(0).toString(), q.value(1).toDouble());
             }
             subDb.close();
-        } else {
-            qDebug() << "子线程数据库打开失败";
         }
 
-        // 回调主线程更新 UI
         QMetaObject::invokeMethod(this, [this, data]() {
             refreshChart(data);
-
             double total = 0;
             for(double v : data.values()) total += v;
             ui->labelTotal->setText(QString("总额统计: %1 元").arg(QString::number(total, 'f', 2)));
@@ -122,86 +149,23 @@ void MainWindow::updateStatistics() {
     });
 }
 
-// --- 核心模块：刷新图表 ---
+// 图表刷新
 void MainWindow::refreshChart(const QMap<QString, double> &data) {
     QPieSeries *series = new QPieSeries();
     for (auto it = data.begin(); it != data.end(); ++it) {
         series->append(it.key(), it.value());
     }
 
-    // 设置每一块饼图的标签可见
-    for(auto slice : series->slices()) {
-        slice->setLabelVisible(true);
-        slice->setLabel(QString("%1: %2元").arg(slice->label()).arg(slice->value()));
-    }
+    for(auto slice : series->slices()) slice->setLabelVisible(true);
 
     QChart *chart = new QChart();
     chart->addSeries(series);
-    chart->setTitle("支出分类实时构成图");
-    chart->setTheme(QChart::ChartThemeBlueNcs); // 设置专业蓝色主题
-    chart->setAnimationOptions(QChart::AllAnimations); // 开启全部动画效果
+    chart->setTitle("支出占比");
+    chart->setAnimationOptions(QChart::AllAnimations);
+    chart->legend()->setAlignment(Qt::AlignRight);
 
     ui->chartView->setChart(chart);
     ui->chartView->setRenderHint(QPainter::Antialiasing);
 }
-MainWindow::~MainWindow() {
-    delete ui;
-}
 
-
-// 对应功能：支持多条件筛选数据 [cite: 7, 62]
-void MainWindow::on_btnFilter_clicked() {
-    // 获取你在输入框里写的分类（比如“餐饮”）
-    QString targetCategory = ui->lineCategory->text();
-
-    if (targetCategory.isEmpty()) {
-        // 如果没写字，就显示所有数据
-        model->setFilter("");
-    } else {
-        // SQL 语法：category = '餐饮'
-        // setFilter 会自动把这个条件加到 SELECT 语句后面
-        model->setFilter(QString("category = '%1'").arg(targetCategory));
-    }
-
-    // 刷新视图
-    model->select();
-}
-
-#include <QMessageBox> // 记得加头文件
-
-// 对应功能：生成月度/年度财务报表
-void MainWindow::on_btnReport_clicked() {
-    QString category = ui->lineCategory->text().trimmed();
-    bool ok;
-    double amount = ui->lineAmount->text().toDouble(&ok);
-
-    if (category.isEmpty() || !ok || amount <= 0) {
-        QMessageBox::warning(this, "输入错误", "请确保分类不为空且金额为正数字！");
-        return;
-    }
-    QSqlQuery query;
-    // 获取当前年-月，例如 "2025-12"
-    QString currentMonth = QDate::currentDate().toString("yyyy-MM");
-
-    // SQL 统计：计算所有日期以 "2025-12" 开头的金额总和
-    // 使用 LIKE 语法匹配字符串
-    query.prepare("SELECT SUM(amount) FROM finance WHERE date LIKE :ym");
-    query.bindValue(":ym", currentMonth + "%"); // 加上 % 进行模糊匹配避免严格匹配导致筛选不到
-
-    if (query.exec() && query.next()) {
-        double total = query.value(0).toDouble();
-
-        // 弹窗显示报表结果
-        QString report = QString("=== 财务报表 ===\n\n"
-                                 "时间: %1\n"
-                                 "总支出: %2 元\n"
-                                 "财务状况: %3")
-                             .arg(currentMonth)
-                             .arg(total)
-                             .arg(total > 5000 ? "注意节约！" : "状况良好");
-
-        QMessageBox::information(this, "月度分析报告", report);
-    }
-}
-
-
+MainWindow::~MainWindow() { delete ui; }

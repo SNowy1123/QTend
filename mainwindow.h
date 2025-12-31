@@ -3,7 +3,8 @@
 
 #include <QMainWindow>
 #include <QSqlTableModel>
-#include <QtCharts> // 必须包含图表头文件
+#include <QMessageBox>
+#include <QtCharts>
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -17,15 +18,17 @@ public:
     ~MainWindow();
 
 private slots:
-    void on_btnAdd_clicked();      // 添加按钮
-    void on_btnFilter_clicked(); // 新增：筛选按钮槽函数
-    void on_btnReport_clicked(); // 新增：报表按钮槽函数
-    void updateStatistics();       // 多线程统计函数
+    void on_btnAdd_clicked();      // 添加
+    void on_btnDelete_clicked();   // 删除
+    void on_btnFilter_clicked();   // 筛选
+    void on_btnReset_clicked();    // 重置
+    void on_btnReport_clicked();   // 报表
+    void updateStatistics();       // 异步统计
 
 private:
     Ui::MainWindow *ui;
-    QSqlTableModel *model;         // Model/View 核心模型 [cite: 133]
-    void initDatabase();           // 数据库初始化
-    void refreshChart(const QMap<QString, double> &data); // 刷新图表
+    QSqlTableModel *model;
+    void initDatabase();
+    void refreshChart(const QMap<QString, double> &data);
 };
-#endif
+#endif // MAINWINDOW_H
