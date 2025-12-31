@@ -3,37 +3,63 @@
 #include <QSqlDatabase>
 #include <QSqlQuery>
 #include <QtConcurrent> // 必须包含多线程头文件 [cite: 133]
-
+#include <QDebug>
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow) {
     ui->setupUi(this);
     initDatabase();
 }
 
 // 1. 数据库与 Model 绑定 (MV + DB 模块) [cite: 133]
+
 void MainWindow::initDatabase() {
+    // 数据库模块应用
     QSqlDatabase db = QSqlDatabase::addDatabase("QSQLITE");
-    db.setDatabaseName("finance.db"); // 确保此文件在编译生成的目录下
-    if (db.open()) {
-        model = new QSqlTableModel(this);
-        model->setTable("finance");
-        model->setEditStrategy(QSqlTableModel::OnFieldChange);
+    // 确保 finance.db 文件位于编译运行目录下 [cite: 5]
+    db.setDatabaseName("finance.db");
+
+    if (!db.open()) {
+        qDebug() << "数据库打开失败:" << db.lastError().text();
+        return;
+    }
+
+    // Model/View 框架应用
+    model = new QSqlTableModel(this);
+    model->setTable("finance");
+    // 设置手动提交，方便控制刷新时机 [cite: 7]
+    model->setEditStrategy(QSqlTableModel::OnManualSubmit);
+    model->select();
+
+    ui->tableView->setModel(model);
+    qDebug() << "数据库初始化成功，路径:" << QCoreApplication::applicationDirPath() + "/finance.db";
+}
+void MainWindow::on_btnAdd_clicked() {
+    // 1. 获取输入数据
+    QString category = ui->lineCategory->text();
+    double amount = ui->lineAmount->text().toDouble();
+    QString date = QDate::currentDate().toString("yyyy-MM-dd");
+
+    if (category.isEmpty() || amount <= 0) {
+        qDebug() << "输入数据无效";
+        return;
+    }
+
+    // 2. 执行数据库插入 [cite: 5]
+    QSqlQuery query;
+    query.prepare("INSERT INTO finance (date, category, amount) VALUES (?, ?, ?)");
+    query.addBindValue(date);
+    query.addBindValue(category);
+    query.addBindValue(amount);
+
+    if (query.exec()) {
+        qDebug() << "数据插入成功";
+        // 3. 核心：强制刷新 Model，让 TableView 显示新数据 [cite: 7]
         model->select();
-        ui->tableView->setModel(model); // 绑定视图 [cite: 133]
+        // 4. 核心：启动多线程异步统计更新图表
+        updateStatistics();
+    } else {
+        qDebug() << "插入失败:" << query.lastError().text();
     }
 }
-
-// 2. 添加数据
-void MainWindow::on_btnAdd_clicked() {
-    int row = model->rowCount();
-    model->insertRow(row);
-    // 假设你的输入框分别叫 lineCategory 和 lineAmount
-    model->setData(model->index(row, 1), QDate::currentDate().toString("yyyy-MM-dd"));
-    model->setData(model->index(row, 2), ui->lineCategory->text());
-    model->setData(model->index(row, 3), ui->lineAmount->text().toDouble());
-    model->submitAll();
-    updateStatistics(); // 数据变动后更新统计
-}
-
 // 3. 多线程统计逻辑 (THR 模块) [cite: 133]
 void MainWindow::updateStatistics() {
     // 满足任务书要求的：多线程(THR) + 数据库(DB) 融合
