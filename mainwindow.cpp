@@ -203,3 +203,5 @@ void MainWindow::on_btnReport_clicked() {
         QMessageBox::information(this, "月度分析报告", report);
     }
 }
+
+

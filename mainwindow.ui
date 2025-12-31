@@ -7,11 +7,11 @@
     <x>0</x>
     <y>0</y>
     <width>900</width>
-    <height>700</height>
+    <height>750</height>
    </rect>
   </property>
   <property name="windowTitle">
-   <string>个人财务管理系统</string>
+   <string>个人财务管理系统 - 终极版</string>
   </property>
   <widget class="QWidget" name="centralwidget">
    <layout class="QVBoxLayout" name="verticalLayout">
@@ -48,7 +48,7 @@
       <item>
        <widget class="QPushButton" name="btnAdd">
         <property name="styleSheet">
-         <string>background-color: #4CAF50; color: white; font-weight: bold;</string>
+         <string>background-color: #2ecc71; color: white; font-weight: bold;</string>
         </property>
         <property name="text">
          <string>添加账单</string>
@@ -62,7 +62,7 @@
       <item>
        <widget class="QPushButton" name="btnFilter">
         <property name="toolTip">
-         <string>在分类框输入文字后点击此按钮进行筛选，留空则显示全部</string>
+         <string>在分类框输入文字后点击此按钮进行筛选</string>
         </property>
         <property name="text">
          <string>按分类筛选</string>
@@ -70,9 +70,26 @@
        </widget>
       </item>
       <item>
+       <widget class="QPushButton" name="btnReset">
+        <property name="text">
+         <string>重置视图</string>
+        </property>
+       </widget>
+      </item>
+      <item>
        <widget class="QPushButton" name="btnReport">
         <property name="text">
-         <string>生成本月报表</string>
+         <string>月度报表</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnDelete">
+        <property name="styleSheet">
+         <string>color: #e74c3c; font-weight: bold;</string>
+        </property>
+        <property name="text">
+         <string>删除选中</string>
         </property>
        </widget>
       </item>
@@ -106,7 +123,7 @@
       <property name="minimumSize">
        <size>
         <width>0</width>
-        <height>300</height>
+        <height>350</height>
        </size>
       </property>
      </widget>
