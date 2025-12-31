@@ -172,7 +172,7 @@ void MainWindow::on_btnReport_clicked() {
     // SQL 统计：计算所有日期以 "2025-12" 开头的金额总和
     // 使用 LIKE 语法匹配字符串
     query.prepare("SELECT SUM(amount) FROM finance WHERE date LIKE :ym");
-    query.bindValue(":ym", currentMonth + "%"); // 加上 % 进行模糊匹配
+    query.bindValue(":ym", currentMonth + "%"); // 加上 % 进行模糊匹配避免严格匹配导致筛选不到
 
     if (query.exec() && query.next()) {
         double total = query.value(0).toDouble();
