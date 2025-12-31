@@ -1,3 +1,13 @@
+/**
+ * @file mainwindow.cpp
+ * @brief 个人财务管理系统主逻辑实现
+ * @details 包含数据库连接、CRUD操作、多线程统计与图表绘制逻辑
+ * @author 郑伟业2023414290440
+ * @date 2025-01-01
+ * @version 1.0.0
+ */
+
+
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 #include <QSqlDatabase>
