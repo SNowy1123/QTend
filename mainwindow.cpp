@@ -19,6 +19,8 @@
 MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWindow) {
     ui->setupUi(this);
 
+this->setWindowTitle("个人财务管理系统 v1.0 (Final)");
+
     initDatabase();
     updateStatistics();
 
