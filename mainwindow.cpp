@@ -48,6 +48,7 @@ void MainWindow::initDatabase() {
     ui->tableView->horizontalHeader()->setSectionResizeMode(QHeaderView::Stretch);
 
     qDebug() << "数据库初始化完毕，路径:" << QCoreApplication::applicationDirPath() + "/finance.db";
+    ui->statusbar->showMessage("数据库连接就绪", 3000);
 }
 
 // --- 核心模块：添加数据 (使用命名绑定修复参数错误) ---
@@ -82,6 +83,7 @@ void MainWindow::on_btnAdd_clicked() {
     } else {
         qDebug() << "插入失败详情:" << query.lastError().text();
     }
+    ui->statusbar->showMessage("账单已成功录入系统", 2000);
 }
 
 // --- 核心模块：多线程统计 (修复跨线程报错) ---
