@@ -129,17 +129,21 @@ void MainWindow::refreshChart(const QMap<QString, double> &data) {
         series->append(it.key(), it.value());
     }
 
+    // 设置每一块饼图的标签可见
+    for(auto slice : series->slices()) {
+        slice->setLabelVisible(true);
+        slice->setLabel(QString("%1: %2元").arg(slice->label()).arg(slice->value()));
+    }
+
     QChart *chart = new QChart();
     chart->addSeries(series);
-    chart->setTitle("支出分类统计");
-    chart->setAnimationOptions(QChart::SeriesAnimations);
-    chart->legend()->setAlignment(Qt::AlignRight);
+    chart->setTitle("支出分类实时构成图");
+    chart->setTheme(QChart::ChartThemeBlueNcs); // 设置专业蓝色主题
+    chart->setAnimationOptions(QChart::AllAnimations); // 开启全部动画效果
 
-    // 绑定到 UI 的 QChartView
     ui->chartView->setChart(chart);
     ui->chartView->setRenderHint(QPainter::Antialiasing);
 }
-
 MainWindow::~MainWindow() {
     delete ui;
 }
