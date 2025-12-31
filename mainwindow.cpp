@@ -141,3 +141,51 @@ void MainWindow::refreshChart(const QMap<QString, double> &data) {
 MainWindow::~MainWindow() {
     delete ui;
 }
+
+
+// 对应功能：支持多条件筛选数据 [cite: 7, 62]
+void MainWindow::on_btnFilter_clicked() {
+    // 获取你在输入框里写的分类（比如“餐饮”）
+    QString targetCategory = ui->lineCategory->text();
+
+    if (targetCategory.isEmpty()) {
+        // 如果没写字，就显示所有数据
+        model->setFilter("");
+    } else {
+        // SQL 语法：category = '餐饮'
+        // setFilter 会自动把这个条件加到 SELECT 语句后面
+        model->setFilter(QString("category = '%1'").arg(targetCategory));
+    }
+
+    // 刷新视图
+    model->select();
+}
+
+#include <QMessageBox> // 记得加头文件
+
+// 对应功能：生成月度/年度财务报表
+void MainWindow::on_btnReport_clicked() {
+    QSqlQuery query;
+    // 获取当前年-月，例如 "2025-12"
+    QString currentMonth = QDate::currentDate().toString("yyyy-MM");
+
+    // SQL 统计：计算所有日期以 "2025-12" 开头的金额总和
+    // 使用 LIKE 语法匹配字符串
+    query.prepare("SELECT SUM(amount) FROM finance WHERE date LIKE :ym");
+    query.bindValue(":ym", currentMonth + "%"); // 加上 % 进行模糊匹配
+
+    if (query.exec() && query.next()) {
+        double total = query.value(0).toDouble();
+
+        // 弹窗显示报表结果
+        QString report = QString("=== 财务报表 ===\n\n"
+                                 "时间: %1\n"
+                                 "总支出: %2 元\n"
+                                 "财务状况: %3")
+                             .arg(currentMonth)
+                             .arg(total)
+                             .arg(total > 5000 ? "注意节约！" : "状况良好");
+
+        QMessageBox::information(this, "月度分析报告", report);
+    }
+}
