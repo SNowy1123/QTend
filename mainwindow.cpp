@@ -36,26 +36,34 @@ void MainWindow::on_btnAdd_clicked() {
 
 // 3. 多线程统计逻辑 (THR 模块) [cite: 133]
 void MainWindow::updateStatistics() {
+    // 满足任务书要求的：多线程(THR) + 数据库(DB) 融合
     QtConcurrent::run([this]() {
-        // 关键：在子线程中使用默认连接名（或者重新 open）
-        {
-            QSqlDatabase db = QSqlDatabase::database();
-            if (!db.isOpen()) db.open(); // 确保子线程内数据库是开启状态
+        // 关键：在子线程内创建一个临时的、独立的数据库连接
+        QSqlDatabase tempDb;
+        if (QSqlDatabase::contains("thread_db")) {
+            tempDb = QSqlDatabase::database("thread_db");
+        } else {
+            tempDb = QSqlDatabase::addDatabase("QSQLITE", "thread_db");
+            tempDb.setDatabaseName("finance.db"); // 确保与主线程文件名一致
         }
 
         QMap<QString, double> statData;
-        QSqlQuery query("SELECT category, SUM(amount) FROM finance GROUP BY category");
-
-        while (query.next()) {
-            statData.insert(query.value(0).toString(), query.value(1).toDouble());
+        if (tempDb.open()) {
+            QSqlQuery query(tempDb); // 显式指定使用子线程的连接
+            query.exec("SELECT category, SUM(amount) FROM finance GROUP BY category");
+            while (query.next()) {
+                statData.insert(query.value(0).toString(), query.value(1).toDouble());
+            }
+            tempDb.close();
         }
 
+        // 回到主线程更新 UI [cite: 95]
         QMetaObject::invokeMethod(this, [this, statData]() {
             refreshChart(statData);
-            // 更新总额显示
             double total = 0;
             for(double v : statData.values()) total += v;
             ui->labelTotal->setText(QString("总额统计: %1").arg(total));
+            model->select(); // 刷新 TableView 视图
         });
     });
 }
