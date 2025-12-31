@@ -165,6 +165,14 @@ void MainWindow::on_btnFilter_clicked() {
 
 // 对应功能：生成月度/年度财务报表
 void MainWindow::on_btnReport_clicked() {
+    QString category = ui->lineCategory->text().trimmed();
+    bool ok;
+    double amount = ui->lineAmount->text().toDouble(&ok);
+
+    if (category.isEmpty() || !ok || amount <= 0) {
+        QMessageBox::warning(this, "输入错误", "请确保分类不为空且金额为正数字！");
+        return;
+    }
     QSqlQuery query;
     // 获取当前年-月，例如 "2025-12"
     QString currentMonth = QDate::currentDate().toString("yyyy-MM");
