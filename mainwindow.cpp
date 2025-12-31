@@ -24,6 +24,9 @@ MainWindow::MainWindow(QWidget *parent) : QMainWindow(parent), ui(new Ui::MainWi
 
     // 快捷键：回车添加
     connect(ui->lineAmount, &QLineEdit::returnPressed, ui->btnAdd, &QPushButton::click);
+
+    // 新增代码：启动时光标自动定位到分类框
+    ui->lineCategory->setFocus();
 }
 
 void MainWindow::initDatabase() {
