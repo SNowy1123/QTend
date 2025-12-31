@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>800</width>
-    <height>600</height>
+    <width>900</width>
+    <height>700</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -25,7 +25,11 @@
        </widget>
       </item>
       <item>
-       <widget class="QLineEdit" name="lineCategory"/>
+       <widget class="QLineEdit" name="lineCategory">
+        <property name="placeholderText">
+         <string>例如：餐饮、交通</string>
+        </property>
+       </widget>
       </item>
       <item>
        <widget class="QLabel" name="label_2">
@@ -35,20 +39,71 @@
        </widget>
       </item>
       <item>
-       <widget class="QLineEdit" name="lineAmount"/>
+       <widget class="QLineEdit" name="lineAmount">
+        <property name="placeholderText">
+         <string>0.00</string>
+        </property>
+       </widget>
       </item>
       <item>
        <widget class="QPushButton" name="btnAdd">
         <property name="text">
          <string>添加账单</string>
         </property>
+        <property name="styleSheet">
+         <string>background-color: #4CAF50; color: white; font-weight: bold;</string>
+        </property>
        </widget>
       </item>
      </layout>
     </item>
+
     <item>
-     <widget class="QTableView" name="tableView"/>
+     <layout class="QHBoxLayout" name="horizontalLayout_2">
+      <item>
+       <widget class="QPushButton" name="btnFilter">
+        <property name="text">
+         <string>按分类筛选</string>
+        </property>
+        <property name="toolTip">
+         <string>在分类框输入文字后点击此按钮进行筛选，留空则显示全部</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QPushButton" name="btnReport">
+        <property name="text">
+         <string>生成本月报表</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <spacer name="horizontalSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
     </item>
+
+    <item>
+     <widget class="QTableView" name="tableView">
+      <property name="alternatingRowColors">
+       <bool>true</bool>
+      </property>
+      <property name="selectionBehavior">
+       <enum>QAbstractItemView::SelectRows</enum>
+      </property>
+     </widget>
+    </item>
+
     <item>
      <widget class="QChartView" name="chartView" native="true">
       <property name="minimumSize">
@@ -59,10 +114,21 @@
       </property>
      </widget>
     </item>
+
     <item>
      <widget class="QLabel" name="labelTotal">
       <property name="text">
-       <string>总额统计：0.00</string>
+       <string>总额统计: 0.00 元</string>
+      </property>
+      <property name="alignment">
+       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+      </property>
+      <property name="font">
+       <font>
+        <pointSize>12</pointSize>
+        <weight>75</weight>
+        <bold>true</bold>
+       </font>
       </property>
      </widget>
     </item>
@@ -71,6 +137,7 @@
   <widget class="QMenuBar" name="menubar"/>
   <widget class="QStatusBar" name="statusbar"/>
  </widget>
+ 
  <customwidgets>
   <customwidget>
    <class>QChartView</class>

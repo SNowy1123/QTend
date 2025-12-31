@@ -18,6 +18,8 @@ public:
 
 private slots:
     void on_btnAdd_clicked();      // 添加按钮
+    void on_btnFilter_clicked(); // 新增：筛选按钮槽函数
+    void on_btnReport_clicked(); // 新增：报表按钮槽函数
     void updateStatistics();       // 多线程统计函数
 
 private:
