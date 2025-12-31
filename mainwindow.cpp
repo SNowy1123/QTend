@@ -50,6 +50,8 @@ void MainWindow::on_btnAdd_clicked() {
         return;
     }
 
+    ui->statusbar->showMessage("录入失败：数据格式错误", 3000);
+
     QSqlQuery query;
     query.prepare("INSERT INTO finance (date, category, amount) VALUES (:d, :c, :a)");
     query.bindValue(":d", QDate::currentDate().toString("yyyy-MM-dd"));
